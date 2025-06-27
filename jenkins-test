@@ -1,0 +1,112 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_URL = ''
+        GIT_BRANCH = ''
+        DOCKER_REGISTRY = ''
+        DOCKER_CREDENTIALS_ID = ''
+        KUBE_CREDENTIALS_ID = ''
+        KUBE_NAMESPACE = ''
+        DEPLOYMENT_NAME = ''
+        CONTAINER_NAME = ''
+        IMAGE_TAG = ''
+        IMAGE_NAME = ''
+    }
+
+    stages {
+        stage('Load Config') {
+            steps {
+                // Loading config from "Managed files" (Config File Provider plugin)
+                configFileProvider([configFile(fileId: 'jenkins-config-properties', variable: 'CONFIG_FILE')]) {
+                    script {
+                        // Reading properties from configfile
+                        def props = readProperties file: env.CONFIG_FILE
+                        env.GIT_URL              = props.GIT_URL
+                        env.GIT_BRANCH           = props.GIT_BRANCH
+                        env.DOCKER_REGISTRY      = props.DOCKER_REGISTRY
+                        env.DOCKER_CREDENTIALS_ID= props.DOCKER_CREDENTIALS_ID
+                        env.KUBE_CREDENTIALS_ID  = props.KUBE_CREDENTIALS_ID
+                        env.KUBE_NAMESPACE       = props.KUBE_NAMESPACE
+                        env.DEPLOYMENT_NAME      = props.DEPLOYMENT_NAME
+                        env.CONTAINER_NAME       = props.CONTAINER_NAME
+                        env.IMAGE_TAG            = "${env.GIT_BRANCH}-${env.BUILD_NUMBER}"
+                        env.IMAGE_NAME           = "${env.DOCKER_REGISTRY}/${env.JOB_NAME}:${env.IMAGE_TAG}"
+                    }
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                echo "Cloning ${env.GIT_URL}@${env.GIT_BRANCH}..."
+                git url: env.GIT_URL, branch: env.GIT_BRANCH
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo "Building Docker image ${env.IMAGE_NAME}..."
+                    docker.build(env.IMAGE_NAME)
+                }
+            }
+        }
+
+        stage('Run Unit Tests') {
+            steps {
+                script {
+                    echo "Running unit tests inside container..."
+                    docker.image(env.IMAGE_NAME).inside {
+                        // Running composer
+                        sh 'php composer install'
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            when {
+                expression { currentBuild.currentResult == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    echo "Pushing image to registry ${env.DOCKER_REGISTRY}..."
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
+                        docker.image(env.IMAGE_NAME).push()
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                expression { currentBuild.currentResult == 'SUCCESS' }
+            }
+            steps {
+                script {
+                    echo "Deploying to Kubernetes namespace ${env.KUBE_NAMESPACE}..."
+                    withCredentials([file(credentialsId: env.KUBE_CREDENTIALS_ID, variable: 'KUBECONFIG')]) {
+                        sh "kubectl --kubeconfig=$KUBECONFIG -n ${env.KUBE_NAMESPACE} set image deployment/${env.DEPLOYMENT_NAME} ${env.CONTAINER_NAME}=${env.IMAGE_NAME}"
+                        sh "kubectl --kubeconfig=$KUBECONFIG -n ${env.KUBE_NAMESPACE} rollout status deployment/${env.DEPLOYMENT_NAME} --timeout=120s"
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning workspace...'
+            cleanWs()
+        }
+        success {
+            echo "Build #${env.BUILD_NUMBER} completed successfully!"
+        }
+        failure {
+            mail to: 'devops@mail.com',
+                 subject: "[Jenkins] Build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                 body: "Check console output at ${env.BUILD_URL}"
+        }
+    }
+}
