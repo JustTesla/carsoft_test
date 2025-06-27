@@ -1,0 +1,62 @@
+version: '3'
+services:
+  nginx:
+    container_name: car_soft_nginx
+    restart: always
+    build: 
+      dockerfile: docker/nginx/Dockerfile
+      context: ./..
+    volumes:
+      - ../public:/var/www/public
+    depends_on:
+      - php
+    links:
+      - php
+    networks:
+      - localhost_default
+    ports:
+      - "80:80"  # Проброс порта 80 контейнера на порт 80 хоста
+
+  php:
+    container_name: car_soft_php
+    restart: always
+    build:
+      dockerfile: docker/php/Dockerfile
+      context: ./..
+      target: dev
+    volumes:
+      - ../.:/var/www
+      - phpstorm-coverage:/opt/phpstorm-coverage
+      - ../profile:/tmp/profile
+      - ~/.cache/composer:/.composer
+      - /var/tmp:/var/tmp
+      - ~/.ssh:/home/v1acl/.ssh
+    environment:
+      PHP_XDEBUG_ENABLED: 1
+    links: 
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - localhost_default
+
+  postgres:
+    container_name: car_soft_postgres
+    restart: always
+    image: postgres:16.1-alpine
+    volumes:
+      - postgres.16.1-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: default
+    networks:
+      - localhost_default
+
+networks:
+  localhost_default:
+    external: true
+
+volumes:
+  postgres.16.1-data: {}
+  phpstorm-coverage: {}

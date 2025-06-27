@@ -1,0 +1,68 @@
+{% set menuItem = 'ecu' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}
+	Admin | Edit ECU
+	{{ softwareService.ecuSoftware.ecu.name }}
+	Software
+	{{ softwareService.ecuSoftware.version }}
+	Service
+	{{ softwareService.service.name }}
+{% endblock %}
+
+{% block content %}
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu') }}">ECU</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu_details', {id: softwareService.ecuSoftware.ecu.id}) }}">{{ softwareService.ecuSoftware.ecu.name }}</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu_software_details', {id: softwareService.ecuSoftware.id}) }}">{{ softwareService.ecuSoftware.version }}</a>
+			</li>
+			<li class="breadcrumb-item active" aria-current="page">{{ softwareService.service.name }}</li>
+		</ol>
+	</nav>
+
+	<!-- DataTales Example -->
+	<div class="card shadow mb-4">
+		<div class="card-body">
+			{% if error is defined %}
+				<div class="form-group card border-left-danger shadow h-100 py-2">
+					<div class="card-body">
+						{{ error }}
+					</div>
+				</div>
+			{% endif %}
+
+			{{ form_start(form) }}
+			<div class="form-row">
+				<div class="form-group col-lg-6">
+					{{ form_row(form.service) }}
+				</div>
+				<div class="form-group col-lg-6">
+					{{ form_row(form.replacement) }}
+				</div>
+			</div>
+
+			<div class="form-group card border-left-primary h-100 py-2 d-none" id="replacementFileContent">
+				<div class="card-body">
+					<pre></pre>
+				</div>
+			</div>
+
+			{{ form_end(form) }}
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="module">
+		import '{{ asset('admin/ecu/software/service/replacement_form.js') }}';
+     </script>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% set menuItem = 'service' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Admin | Service
+{% endblock %}
+
+{% block content %}
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item active" aria-current="page">Service</li>
+		</ol>
+	</nav>
+
+	<!-- DataTales Example -->
+	<div class="card shadow mb-4">
+		<div class="card-header py-3">
+			<a class="btn btn-primary" href="{{ path('admin_service_new') }}">New</a>
+		</div>
+		<div class="card-body">
+			<div class="table-responsive">
+				<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" data-uri="{{ path('admin_service_datatable') }}">
+					<thead>
+						<tr>
+							<th>Name</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<th>Name</th>
+							<th>Action</th>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		</div>
+	</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="module">
+     	$(document).ready(function () {
+			$('#dataTable').DataTable({
+				ajax: $('#dataTable').data('uri'),
+				processing: true,
+				serverSide: true,
+				order: [[0, 'asc']],
+				columnDefs: [
+					{
+						render: (data, type, row) => '<a href="' + row[1][0] + '" class="btn btn-warning btn-circle btn-sm mx-1"><i class="fas fa-edit"></i></a>' +
+							'<a href="' + row[1][1] + '" class="btn btn-danger btn-circle btn-sm mx-1"><i class="fas fa-trash"></i></a>',
+						targets: 1
+					},
+				],
+				columns: [
+					{ orderSequence: ['asc'] },
+					{ orderSequence: [] },
+				]
+			});
+		});
+     </script>
+{% endblock %}

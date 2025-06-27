@@ -1,0 +1,219 @@
+{% set menuItem = 'dashboard' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block content %}
+	{% if error is defined and error %}
+		<div>{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+	{% endif %}
+
+	<div class="card shadow mb-4 col-lg-6">
+		<div class="card-header">
+			Replacement
+		</div>
+		<div class="card-body">
+			{{ form_start(form) }}
+			{{ form_errors(form) }}
+
+			<div id="form">
+				<div class="form-group position-relative">
+					<label class="required" for="ecu">Ecu</label>
+					<input type="text" id="ecu" class="form-control" name="form[ecu]" placeholder="Type something"/>
+				</div>
+				<div id="softwareContainer" class="d-none">
+					<div class="form-group">
+						<label class="required" for="software">Software</label>
+
+						<div class="input-group position-relative">
+							<div class="input-group-prepend">
+								<div class="input-group-text">
+									<input name="form[software_type]" type="radio" value="search" aria-label="Search" checked/>
+								</div>
+							</div>
+							<input type="text" id="software" name="form[software]" class="form-control" placeholder="Type something"/>
+						</div>
+					</div>
+
+					<div class="form-group pl-2">
+						<div class="form-check">
+							<input class="form-check-input {#is-invalid#}" type="radio" name="form[software_type]" id="softwareTypeAuto" value="auto" aria-describedby="softwareAutoTypeFeedback" disabled>
+							<label class="form-check-label" for="softwareTypeAuto">Auto</label>
+							<div id="softwareAutoTypeFeedback" class="invalid-feedback">
+								Software version is not found.
+							</div>
+						</div>
+					</div>
+
+					<div class="form-group pl-2">
+						<div class="form-check">
+							<input class="form-check-input" type="radio" name="form[software_type]" value="any" id="softwareAnyType">
+							<label class="form-check-label" for="softwareAnyType">Any</label>
+						</div>
+					</div>
+
+					<div id="fileContainer" class="d-none">
+						<div class="form-group">
+							<label for="file" class="required">File</label>
+							<div class="custom-file">
+								<input type="file" id="file" name="form[file]" required="required" lang="en" class="custom-file-input">
+								<label for="file" class="custom-file-label"></label>
+							</div>
+						</div>
+
+						<div class="form-group position-relative d-none" id="serviceContainer">
+							<label class="required" for="service">Service</label>
+							<input type="text" id="service" name="form[service]" class="form-control" placeholder="Type something"/>
+						</div>
+
+						<div class="form-group d-none" id="submitContainer">
+							<button type="submit" name="form[submit]" class="btn-primary btn">Submit</button>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{{ form_widget(form._token) }}
+
+			{{ form_end(form, {render_rest: false}) }}
+
+			<input type="hidden" id="ecuId" name="ecuId"/>
+			<input type="hidden" id="softwareId" name="softwareId"/>
+		</div>
+	</div>
+{% endblock %}
+
+{% block javascripts %}
+	{{ parent() }}
+
+	<script type="module">
+		import Autocomplete from 'bootstrap5-autocomplete';
+
+		$(document).ready(() => {
+			let $document = $(document),
+				$ecuId = $("#ecuId"),
+				softwareId = '',
+				$softwareId = $("#softwareId"),
+				serviceId = '';
+
+			let ecuAutocomplete = new Autocomplete(
+				document.getElementById("ecu"), 
+				{
+					server: '{{ path('api_ecu_autocomplete') }}',
+					fetchOptions: {
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					},
+					hiddenInput: true,
+					liveServer: true,
+					fullWidth: true,
+					highlightTyped: true,
+					maximumItems: 5,
+					onSelectItem: (item) => {
+						$ecuId.val(item.value);
+						$document.trigger('ecuChanged');
+					}
+				}
+			);
+			let softwareAutocomplete = new Autocomplete(
+				document.getElementById("software"), 
+				{
+					server: '{{ path('api_ecu_software_autocomplete') }}',
+					serverParams: {
+						related: 'ecuId'
+					},
+					fetchOptions: {
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					},
+					hiddenInput: true,
+					liveServer: true,
+					fullWidth: true,
+					highlightTyped: true,
+					maximumItems: 5,
+					onSelectItem: (item) => {
+						softwareId = item.value;
+						$(document).trigger('softwareChanged');
+					}
+				}
+			);
+			let serviceAutocomplete = new Autocomplete(
+				document.getElementById("service"), 
+				{
+					server: '{{ path('api_ecu_software_service_autocomplete') }}',
+					serverParams: {
+						related: 'softwareId'
+					},
+					fetchOptions: {
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					},
+					hiddenInput: true,
+					liveServer: true,
+					fullWidth: true,
+					highlightTyped: true,
+					maximumItems: 5,
+					onSelectItem: (item) => {
+						serviceId = item.value;
+						$(document).trigger('serviceChanged');
+					}
+				}
+			);
+
+			$("#form")
+				.on('change', 'input[name="form[software_type]"]', () => {
+					$document.trigger('softwareChanged');
+				})
+				.on('change', '#file', function (event) {					
+					$(this).next('.custom-file-label').html($(this).val().replace(/^.*[\\/]/, ''));
+					$("#serviceContainer").removeClass('d-none');
+				});
+
+			$document
+				.on('ecuChanged', () => {
+					let value = $ecuId.val();
+
+					if ('' != value) {
+						$("#softwareContainer").removeClass('d-none');
+					} else {
+						$("#softwareContainer").addClass('d-none');
+					}
+
+					softwareAutocomplete.clear();
+					softwareId = '';
+					$document.trigger('softwareChanged');
+				})
+				.on('softwareChanged', () => {
+					let type = $('#form input[name="form[software_type]"]:checked').val();
+
+					serviceAutocomplete.clear();
+					serviceId = '';
+					$document.trigger('serviceChanged');
+
+					if ('any' == type) {
+						$softwareId.val(['any', $ecuId.val()].join(':'));
+						$("#fileContainer").removeClass('d-none');
+
+						return;
+					}
+					if ('' != softwareId) {
+						$softwareId.val(softwareId);
+						$("#fileContainer").removeClass('d-none');
+
+						return;
+					}
+
+					$("#fileContainer").addClass('d-none');
+				})
+				.on('serviceChanged', () => {
+					if ('' != serviceId) {
+						$("#submitContainer").removeClass('d-none');
+					} else {
+						$("#submitContainer").addClass('d-none');
+					}
+				});
+		});
+	</script>
+{% endblock %}

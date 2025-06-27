@@ -1,0 +1,12 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block body %}
+	<body>
+		<div class="text-center" style="position:absolute; top: 50%; left: 50%; margin: -119px 0 0 -159px">
+			<div class="error mx-auto" data-text="{{ status_code }}">{{ status_code }}</div>
+			<p class="lead text-gray-800 mb-5">{{ status_text }}</p>
+			<p class="text-gray-500 mb-0">It looks like you found a glitch in the matrix...</p>
+			<a href="/">&larr; Back to Home</a>
+		</div>
+	</body>
+{% endblock %}

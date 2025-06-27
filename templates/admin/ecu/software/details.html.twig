@@ -1,0 +1,79 @@
+{% set menuItem = 'ecu' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}
+	Admin | ECU {{ ecuSoftware.ecu.name }} Software
+{% endblock %}
+
+{% block content %}
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu') }}">ECU</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu_details', {id: ecuSoftware.ecu.id}) }}">{{ ecuSoftware.ecu.name }}</a>
+			</li>
+			<li class="breadcrumb-item active" aria-current="page">{{ ecuSoftware.version }}</li>
+		</ol>
+	</nav>
+
+	<!-- DataTales Example -->
+	<div class="card shadow mb-4">
+		<div class="card-header py-3">
+			<a class="btn btn-primary fl" href="{{ path('admin_ecu_software_service_new', {ecuSoftwareId: ecuSoftware.id}) }}">New Service</a>
+		</div>
+		<div class="card-body">
+			<div class="table-responsive">
+				<table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" data-uri="{{ path('admin_ecu_software_service_datatable', {ecuSoftwareId: ecuSoftware.id}) }}">
+					<thead>
+						<tr>
+							<th>Service</th>
+							<th>Replacement</th>
+							<th>Action</th>
+						</tr>
+					</thead>
+					<tfoot>
+						<tr>
+							<th>Service</th>
+							<th>Replacement</th>
+							<th>Action</th>
+						</tr>
+					</tfoot>
+				</table>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		
+	</script>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script type="module">
+     	$(document).ready(function () {
+			$('#dataTable').DataTable({
+				ajax: $('#dataTable').data('uri'),
+				processing: true,
+				serverSide: true,
+				order: [[0, 'asc']],
+				columnDefs: [
+					{
+						render: (data, type, row) => '<a href="' + row[2][0] + '" class="btn btn-warning btn-circle btn-sm mx-1"><i class="fas fa-edit"></i></a>' +
+							'<a href="' + row[2][1] + '" class="btn btn-danger btn-circle btn-sm mx-1"><i class="fas fa-trash"></i></a>',
+						targets: 2
+					},
+				],
+				columns: [
+					{ orderSequence: ['asc'] },
+					{ orderSequence: [] },
+				]
+			});
+		});
+     </script>
+{% endblock %}

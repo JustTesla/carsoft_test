@@ -1,0 +1,51 @@
+{% set menuItem = 'ecu' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}
+	Admin | New ECU
+	{{ ecu.name }}
+	Software
+{% endblock %}
+
+{% block content %}
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu') }}">ECU</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_ecu_details', {id: ecu.id}) }}">{{ ecu.name }}</a>
+			</li>
+			<li class="breadcrumb-item active" aria-current="page">New Software</li>
+		</ol>
+	</nav>
+
+	<!-- DataTales Example -->
+	<div class="card shadow mb-4">
+		<div class="card-body">
+			{% if error is defined %}
+				<div class="form-group card border-left-danger shadow h-100 py-2">
+					<div class="card-body">
+						{{ error }}
+					</div>
+				</div>
+			{% endif %}
+
+			{{ form_start(form) }}
+			<div class="form-row">
+				<div class="form-group col-lg-6">
+					{{ form_row(form.version) }}
+				</div>
+			</div>
+
+			<div class="form-group card border-left-primary h-100 py-2 d-none" id="replacementFileContent">
+				<div class="card-body">
+					<pre></pre>
+				</div>
+			</div>
+
+			{{ form_end(form) }}
+		</div>
+	</div>
+{% endblock %}

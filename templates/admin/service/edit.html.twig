@@ -1,0 +1,43 @@
+{% set menuItem = 'service' %}
+
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}
+	Admin | Edit Service
+{% endblock %}
+
+{% block importmap %}
+	{{ importmap(['admin']) }}
+{% endblock %}
+
+{% block content %}
+	<nav aria-label="breadcrumb">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="{{ path('admin_service') }}">Service</a>
+			</li>
+			<li class="breadcrumb-item active" aria-current="page">Edit</li>
+		</ol>
+	</nav>
+
+	<!-- DataTales Example -->
+	<div class="card shadow mb-4">
+		<div class="card-body">
+			{% if error is defined %}
+				<div class="form-group card border-left-danger shadow h-100 py-2">
+					<div class="card-body">
+						{{ error }}
+					</div>
+				</div>
+			{% endif %}
+
+			{{ form_start(form) }}
+			<div class="form-row">
+				<div class="form-group col-lg-6">
+					{{ form_row(form.name) }}
+				</div>
+			</div>
+			{{ form_end(form) }}
+		</div>
+	</div>
+{% endblock %}

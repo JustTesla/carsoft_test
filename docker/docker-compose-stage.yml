@@ -1,0 +1,50 @@
+version: '3'
+services:
+  php:
+    container_name: car_soft_php
+    restart: always
+    build:
+      dockerfile: docker/php/Dockerfile
+      context: ./..
+      target: prod
+    volumes:
+      - ~/.cache/composer:/.composer
+      - assets:/var/www/public/assets
+    environment:
+      APP_ENV: prod
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/default?serverVersion=15&charset=utf8
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - default
+
+  postgres:
+    container_name: car_soft_postgres
+    restart: always
+    image: postgres:16.1-alpine
+    volumes:
+      - postgres.16.1-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+    networks:
+      - default
+
+networks:
+  default:
+
+volumes:
+  postgres.16.1-data: {}
+  phpstorm-coverage: {}
+  assets: {}

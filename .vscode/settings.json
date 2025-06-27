@@ -1,0 +1,32 @@
+{
+    "search.exclude": {
+        "**/.git": true,
+        "**/var": true
+    },
+    "phpunit.phpunit": "bin/phpunit",
+    "phpunit.args": [
+        "-c",
+        "phpunit.xml.dist"
+    ],
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.coverageBaseDir": "/opt/phpstorm-coverage",
+    "folder-color.pathColors": [
+        {
+            "folderPath": "www/tests/",
+            "color": "foldercolorizer.green"
+        },
+        {
+            "folderPath": "www/src/",
+            "color": "foldercolorizer.blue"
+        },
+        {
+            "folderPath": "www/migrations/",
+            "color": "foldercolorizer.pink"
+        },
+        {
+            "folderPath": "www/config/",
+            "color": "foldercolorizer.yellow"
+        }
+    ],
+    "phpclassgen.vendor": "App"
+}
